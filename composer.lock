@@ -1,0 +1,323 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "ff4b063b60a8ab91f827e2da6312beb6",
+    "packages": [
+        {
+            "name": "psr/http-message",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-message.git",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Http\\Message\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for HTTP messages",
+            "homepage": "https://github.com/php-fig/http-message",
+            "keywords": [
+                "http",
+                "http-message",
+                "psr",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "time": "2016-08-06T14:39:51+00:00"
+        },
+        {
+            "name": "swango/sql",
+            "version": "1.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swangoframework/swango-sql.git",
+                "reference": "a1d43474b9548ca444926d658a0b03f10a06a0cd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swangoframework/swango-sql/zipball/a1d43474b9548ca444926d658a0b03f10a06a0cd",
+                "reference": "a1d43474b9548ca444926d658a0b03f10a06a0cd",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.1",
+                "swlib/http": "^1.0.5",
+                "zendframework/zend-stdlib": "^2.7 || ^3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sql\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "keywords": [
+                "php",
+                "sql",
+                "swoole"
+            ],
+            "time": "2019-09-25T08:07:29+00:00"
+        },
+        {
+            "name": "swango/stdlib",
+            "version": "1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swangoframework/swango-stdlib.git",
+                "reference": "7ea11c485e38f09fdfe3c10b938eb0c06aec806d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swangoframework/swango-stdlib/zipball/7ea11c485e38f09fdfe3c10b938eb0c06aec806d",
+                "reference": "7ea11c485e38f09fdfe3c10b938eb0c06aec806d",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/Context.php",
+                    "src/SysContext.php",
+                    "src/Json.php",
+                    "src/JsonDecodeFailException.php",
+                    "src/FinishFunc.php",
+                    "src/FileLog.php"
+                ],
+                "files": [
+                    "src/XString.php",
+                    "src/Sort.php",
+                    "src/Time.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "keywords": [
+                "php",
+                "swoole"
+            ],
+            "time": "2019-09-20T10:46:29+00:00"
+        },
+        {
+            "name": "swlib/archer",
+            "version": "1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swlib/archer.git",
+                "reference": "13da84af8721c0de6f6e0b7d74f645327579bed1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swlib/archer/zipball/13da84af8721c0de6f6e0b7d74f645327579bed1",
+                "reference": "13da84af8721c0de6f6e0b7d74f645327579bed1",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.1"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src/Archer.php"
+                ],
+                "psr-4": {
+                    "Swlib\\Archer\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Swoole coroutine task kit",
+            "keywords": [
+                "client",
+                "coroutine",
+                "php",
+                "psr7",
+                "swoole",
+                "task",
+                "timer"
+            ],
+            "time": "2019-09-23T06:47:53+00:00"
+        },
+        {
+            "name": "swlib/http",
+            "version": "v1.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swlib/http.git",
+                "reference": "d8ad0b0aed67ab9d1b18a6ce87c40813c0e00060"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swlib/http/zipball/d8ad0b0aed67ab9d1b18a6ce87c40813c0e00060",
+                "reference": "d8ad0b0aed67ab9d1b18a6ce87c40813c0e00060",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": ">=7.0",
+                "psr/http-message": "~1.0"
+            },
+            "require-dev": {
+                "eaglewu/swoole-ide-helper": "dev-master",
+                "phpunit/phpunit": "~7"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Swlib\\Http\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "twosee",
+                    "email": "twose@qq.com"
+                }
+            ],
+            "description": "Swlib-HTTP base class repository, PSR implementation",
+            "keywords": [
+                "http",
+                "php",
+                "psr7",
+                "swoole"
+            ],
+            "time": "2019-09-24T06:38:56+00:00"
+        },
+        {
+            "name": "zendframework/zend-stdlib",
+            "version": "3.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/zend-stdlib.git",
+                "reference": "66536006722aff9e62d1b331025089b7ec71c065"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/zend-stdlib/zipball/66536006722aff9e62d1b331025089b7ec71c065",
+                "reference": "66536006722aff9e62d1b331025089b7ec71c065",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "php": "^5.6 || ^7.0"
+            },
+            "require-dev": {
+                "phpbench/phpbench": "^0.13",
+                "phpunit/phpunit": "^5.7.27 || ^6.5.8 || ^7.1.2",
+                "zendframework/zend-coding-standard": "~1.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.2.x-dev",
+                    "dev-develop": "3.3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Zend\\Stdlib\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "SPL extensions, array utilities, error handlers, and more",
+            "keywords": [
+                "ZendFramework",
+                "stdlib",
+                "zf"
+            ],
+            "time": "2018-08-28T21:34:05+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": [],
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": ">=7.1"
+    },
+    "platform-dev": []
+}

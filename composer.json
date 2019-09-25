@@ -1,0 +1,27 @@
+{
+	"name" : "swango/db",
+	"license" : "Apache-2.0",
+	"keywords" : [
+		"php",
+		"swoole",
+		"db"
+	],
+	"require" : {
+		"php" : ">=7.1",
+		"swango/sql" : "^1.1",
+		"swango/stdlib" : "^1.2",
+		"swlib/archer" : "^1.1"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"Swango\\Db\\" : "src"
+		},
+		"files" : [
+			"src/Bootstrap.php"
+		]
+	},
+	"config" : {
+		"optimize-autoloader" : true,
+		"sort-packages" : true
+	}
+}
