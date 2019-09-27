@@ -25,7 +25,7 @@ abstract class Adapter {
     /**
      * 立即返回所有数据
      *
-     * @param string|\Sql\AbstractPreparableSql|\Sql\AbstractSql $sql
+     * @param string|\Sql\AbstractSql $sql
      * @return array 若为查询，则以数组形式返回查询结果；其他情况返回true
      */
     public function query($sql, ...$params) {
@@ -37,7 +37,7 @@ abstract class Adapter {
     /**
      * 返回迭代器
      *
-     * @param string|\Sql\Select|\Sql\Select $sql
+     * @param string|\Sql\Select $sql
      * @param unknown ...$params
      * @throws \DbErrorException\QueryErrorException
      * @return \Coroutine\Db\Statement 可以直接对其执行 foreach
