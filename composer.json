@@ -15,10 +15,7 @@
 	"autoload" : {
 		"psr-4" : {
 			"Swango\\Db\\" : "src"
-		},
-		"files" : [
-			"src/Bootstrap.php"
-		]
+		}
 	},
 	"config" : {
 		"optimize-autoloader" : true,
