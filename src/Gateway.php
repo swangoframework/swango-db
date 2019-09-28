@@ -1,5 +1,5 @@
 <?php
-abstract class Gateway extends \Swango\Db\BaseGateway {
+abstract class Gateway {
     private static $master_pool, $slave_pool, $slave_adapter;
     public const MASTER_DB = 0, SLAVE_DB = 1;
     /**
@@ -13,8 +13,8 @@ abstract class Gateway extends \Swango\Db\BaseGateway {
         if ($type === self::SLAVE_DB) {
             if (! isset(self::$slave_pool)) {
                 $config = include CONFIGSHAREDIR . 'DB/slave.php';
-                self::$slave_pool = new \Swango\Db\Pool\slave($config['hostname'], $config['username'],
-                    $config['password'], $config['database'], $config['port'], $config['charset']);
+                self::$slave_pool = new \Swango\Db\Pool\slave($config['hostname'], $config['username'], $config['password'], $config['database'], $config['port'],
+                    $config['charset']);
             }
             if (! isset(self::$slave_adapter))
                 self::$slave_adapter = new \Swango\Db\Adapter\slave(self::$slave_pool);
@@ -22,8 +22,8 @@ abstract class Gateway extends \Swango\Db\BaseGateway {
         } else {
             if (! isset(self::$master_pool)) {
                 $config = include CONFIGSHAREDIR . 'DB/master.php';
-                self::$master_pool = new \Swango\Db\Pool\master($config['hostname'], $config['username'],
-                    $config['password'], $config['database'], $config['port'], $config['charset']);
+                self::$master_pool = new \Swango\Db\Pool\master($config['hostname'], $config['username'], $config['password'], $config['database'], $config['port'],
+                    $config['charset']);
             }
             $adapter = \SysContext::get('master_adapter');
             if (isset($adapter))
@@ -82,12 +82,11 @@ abstract class Gateway extends \Swango\Db\BaseGateway {
      */
     public static function registerSubmitFunction(callable $func, ...$parameter): bool {
         if (self::inTransaction()) {
-            \SysContext::push('SBTAC-func',
-                [
-                    false,
-                    $func,
-                    $parameter
-                ]);
+            \SysContext::push('SBTAC-func', [
+                false,
+                $func,
+                $parameter
+            ]);
             return true;
         } else {
             $func(...$parameter);
@@ -103,12 +102,11 @@ abstract class Gateway extends \Swango\Db\BaseGateway {
      */
     public static function registerCoroutineSubmitFunction(callable $func, ...$parameter): bool {
         if (self::inTransaction()) {
-            \SysContext::push('SBTAC-func',
-                [
-                    true,
-                    $func,
-                    $parameter
-                ]);
+            \SysContext::push('SBTAC-func', [
+                true,
+                $func,
+                $parameter
+            ]);
             return true;
         } else {
             \Swlib\Archer::task($func, $parameter);
