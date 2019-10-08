@@ -2,7 +2,6 @@
 namespace Swango\Db\Db;
 class slave extends \Swango\Db\Db {
     public function __destruct() {
-        parent::__destruct();
         \Swango\Db\Pool\slave::subCountor();
     }
     public function getTransactionSerial(): ?int {
@@ -23,10 +22,10 @@ class slave extends \Swango\Db\Db {
     /**
      * 开启延迟收包模式。使得query、prepare、和Statement->fetch/fetchAll之前必须执行recv
      */
-    public function setDefer($defer = NULL) {
+    public function setDefer() {
         if ($this->defer)
             return;
-        parent::setDefer();
+        $this->swoole_db->setDefer();
         $this->defer = true;
     }
 }

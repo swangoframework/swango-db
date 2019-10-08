@@ -30,8 +30,8 @@ abstract class Adapter {
      */
     public function query($sql, ...$params) {
         $db = $this->pool->pop();
-        $ret = $db->betterQuery($sql, ...$params);
-        // $this->pool->push($db);
+        $ret = $db->query($sql, ...$params);
+        $this->pool->push($db);
         return $ret;
     }
     /**

@@ -28,11 +28,18 @@ class master extends \Swango\Db\Adapter {
      * @return array 若为查询，则以数组形式返回查询结果；其他情况返回true
      */
     public function query($sql, ...$params) {
-        if ($sql instanceof \Sql\Update || $sql instanceof \Sql\Insert || $sql instanceof \Sql\InsertMulti ||
-             $sql instanceof \Sql\Delete)
-            $this->prepareDb();
         if (isset($this->db))
-            return $this->db->betterQuery($sql, ...$params);
+            return $this->db->query($sql, ...$params);
+        if ($sql instanceof \Sql\Update || $sql instanceof \Sql\Insert || $sql instanceof \Sql\InsertMulti ||
+             $sql instanceof \Sql\Delete) {
+            return $this->injectDb()->query($sql, ...$params);
+        }
+        if (is_string($sql)) {
+            $sql = trim($sql);
+            $cmd = strtoupper(substr($sql, 0, 6));
+            if ($cmd === 'INSERT' || $cmd === 'UPDATE' || $cmd === 'DELETE')
+                return $this->injectDb()->query($sql, ...$params);
+        }
         return parent::query($sql, ...$params);
     }
     /**
@@ -69,12 +76,8 @@ class master extends \Swango\Db\Adapter {
         return $this->db->rollback();
     }
     public function __get(string $key) {
-        if ($key === 'db') {
-            $db = $this->pool->pop();
-            $this->db = $db;
-            $db->in_adapter = true;
-            return $db;
-        }
+        if ($key === 'db')
+            return $this->injectDb();
         if ($key !== 'affected_rows' && $key !== 'insert_id')
             return null;
         if (! isset($this->db))
@@ -82,11 +85,14 @@ class master extends \Swango\Db\Adapter {
         return $this->db->{$key};
     }
     public function prepareDb(): self {
-        if (! isset($this->db)) {
-            $db = $this->pool->pop();
-            $this->db = $db;
-            $db->in_adapter = true;
-        }
+        if (! isset($this->db))
+            $this->injectDb();
         return $this;
+    }
+    private function injectDb(): \Swango\Db\Db\master {
+        $db = $this->pool->pop();
+        $this->db = $db;
+        $db->in_adapter = true;
+        return $db;
     }
 }
