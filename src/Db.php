@@ -46,7 +46,7 @@ abstract class Db {
     }
     public function recv() {
         $this->need_to_run_recv = false;
-        return parent::recv();
+        return $this->swoole_db->recv();
     }
     public function connect(array $serverInfo = null): bool {
         $ret = $this->swoole_db->connect($serverInfo);
