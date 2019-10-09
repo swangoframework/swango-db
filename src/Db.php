@@ -83,7 +83,7 @@ abstract class Db {
                 $this->recv();
                 // $ret = $this->fetchAll();
             }
-            $ret = $this->fetchAll();
+            $ret = $this->swoole_db->fetchAll();
             if (! isset($ret))
                 return true;
             return $ret;
