@@ -12,10 +12,10 @@ namespace Swango\Db;
  *
  */
 abstract class Pool {
-    public static function init(int $max_conntection): void {
+    public static function init(): void {
         static::$atomic = new \Swoole\Atomic();
         static::$too_many_conntection_lock = new \Swoole\Atomic();
-        static::$max_conntection = $max_conntection;
+        static::$max_conntection = \Swango\Environment::getServiceConfig()->db_max_conntection;
     }
     public static function subCountor(): int {
         -- static::$count;

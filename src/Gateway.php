@@ -11,25 +11,26 @@ abstract class Gateway {
      */
     public static function getAdapter(int $type = self::SLAVE_DB): \Swango\Db\Adapter {
         if ($type === self::SLAVE_DB) {
-            if (! isset(self::$slave_pool)) {
-                $config = include CONFIGSHAREDIR . 'DB/slave.php';
-                self::$slave_pool = new \Swango\Db\Pool\slave($config['hostname'], $config['username'], $config['password'], $config['database'], $config['port'],
-                    $config['charset']);
-            }
-            if (! isset(self::$slave_adapter))
+            if (null === self::$slave_adapter) {
+                if (null === self::$slave_pool) {
+                    $config = \Swango\Environment::getFrameworkConfig('slave_db');
+                    self::$slave_pool = new \Swango\Db\Pool\slave($config['hostname'], $config['username'],
+                        $config['password'], $config['database'], $config['port'], $config['charset']);
+                }
                 self::$slave_adapter = new \Swango\Db\Adapter\slave(self::$slave_pool);
+            }
             return self::$slave_adapter;
         } else {
-            if (! isset(self::$master_pool)) {
-                $config = include CONFIGSHAREDIR . 'DB/master.php';
-                self::$master_pool = new \Swango\Db\Pool\master($config['hostname'], $config['username'], $config['password'], $config['database'], $config['port'],
-                    $config['charset']);
-            }
             $adapter = \SysContext::get('master_adapter');
-            if (isset($adapter))
-                return $adapter;
-            $adapter = new \Swango\Db\Adapter\master(self::$master_pool);
-            \SysContext::set('master_adapter', $adapter);
+            if (! isset($adapter)) {
+                if (null === self::$master_pool) {
+                    $config = \Swango\Environment::getFrameworkConfig('master_db');
+                    self::$master_pool = new \Swango\Db\Pool\master($config['hostname'], $config['username'],
+                        $config['password'], $config['database'], $config['port'], $config['charset']);
+                }
+                $adapter = new \Swango\Db\Adapter\master(self::$master_pool);
+                \SysContext::set('master_adapter', $adapter);
+            }
             return $adapter;
         }
     }
@@ -82,11 +83,12 @@ abstract class Gateway {
      */
     public static function registerSubmitFunction(callable $func, ...$parameter): bool {
         if (self::inTransaction()) {
-            \SysContext::push('SBTAC-func', [
-                false,
-                $func,
-                $parameter
-            ]);
+            \SysContext::push('SBTAC-func',
+                [
+                    false,
+                    $func,
+                    $parameter
+                ]);
             return true;
         } else {
             $func(...$parameter);
@@ -102,11 +104,12 @@ abstract class Gateway {
      */
     public static function registerCoroutineSubmitFunction(callable $func, ...$parameter): bool {
         if (self::inTransaction()) {
-            \SysContext::push('SBTAC-func', [
-                true,
-                $func,
-                $parameter
-            ]);
+            \SysContext::push('SBTAC-func',
+                [
+                    true,
+                    $func,
+                    $parameter
+                ]);
             return true;
         } else {
             \Swlib\Archer::task($func, $parameter);
