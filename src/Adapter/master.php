@@ -30,15 +30,27 @@ class master extends \Swango\Db\Adapter {
     public function query($sql, ...$params) {
         if (isset($this->db))
             return $this->db->query($sql, ...$params);
+
+        // 进入下面代码，说明是初次绑定，则需要处理连接断开的情况
+
         if ($sql instanceof \Sql\Update || $sql instanceof \Sql\Insert || $sql instanceof \Sql\InsertMulti ||
-             $sql instanceof \Sql\Delete) {
-            return $this->injectDb()->query($sql, ...$params);
-        }
-        if (is_string($sql)) {
-            $sql = trim($sql);
-            $cmd = strtoupper(substr($sql, 0, 6));
-            if ($cmd === 'INSERT' || $cmd === 'UPDATE' || $cmd === 'DELETE')
-                return $this->injectDb()->query($sql, ...$params);
+             $sql instanceof \Sql\Delete || (is_string($sql) && strtoupper(substr(ltrim($sql), 0, 6)) !== 'SELECT')) {
+            // 最多尝试两次
+            for($i = 0; $i < 2; ++ $i) {
+                try {
+                    return $this->injectDb()->query($sql, ...$params);
+                } catch(\Swango\Db\Exception\QueryErrorException $e) {
+                    // 2002 Connection reset by peer or Transport endpoint is not connected
+                    // 2006 MySQL server has gone away
+                    if ($e->errno !== 2002 && $e->errno !== 2006)
+                        throw $e;
+
+                    // 抛弃出现问题的连接
+                    $this->db->in_adapter = false;
+                    $this->db = null;
+                }
+            }
+            throw $e;
         }
         return parent::query($sql, ...$params);
     }
