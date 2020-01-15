@@ -56,12 +56,24 @@ abstract class Adapter {
      * @return \Coroutine\Db\Statement 可以直接对其执行 foreach
      */
     public function selectWith($sql, ...$params): Statement {
-        $db = $this->pool->pop();
-        $ret = $db->selectWith($sql, ...$params);
-        // DB会在Statement销毁时push回pool
-        // if (! $db->inDeferMode())
-        // $this->pool->push($db);
-        return $ret;
+        // 最多尝试两次
+        for($i = 0; $i < 2; ++ $i) {
+            try {
+                $db = $this->pool->pop();
+                return $db->selectWith($sql, ...$params);
+                // DB会在Statement销毁时push回pool
+                // if (! $db->inDeferMode())
+                // $this->pool->push($db);
+            } catch(Exception\QueryErrorException $e) {
+                // 2002 Connection reset by peer or Transport endpoint is not connected
+                // 2006 MySQL server has gone away
+                if ($e->errno !== 2002 && $e->errno !== 2006)
+                    throw $e;
+                // 抛弃出现问题的连接
+                unset($db);
+            }
+        }
+        throw $e;
     }
     abstract public function getTransactionSerial(): ?int;
     abstract public function inTransaction(): bool;

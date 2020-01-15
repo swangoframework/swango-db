@@ -9,6 +9,7 @@ namespace Swango\Db\Adapter;
  * @property \Coroutine\Db\master $db
  */
 class master extends \Swango\Db\Adapter {
+    private $db_used = false;
     public function __construct(\Swango\Db\Pool\master $pool) {
         $this->pool = $pool;
     }
@@ -28,31 +29,53 @@ class master extends \Swango\Db\Adapter {
      * @return array 若为查询，则以数组形式返回查询结果；其他情况返回true
      */
     public function query($sql, ...$params) {
-        if (isset($this->db))
-            return $this->db->query($sql, ...$params);
+        if (isset($this->db)) {
+            if ($this->db_used) {
+                return $this->db->query($sql, ...$params);
+            } else {
+                for($i = 0; $i < 2; ++ $i) {
+                    try {
+                        $ret = $this->db->query($sql, ...$params);
+                        $this->db_used = true;
+                        return $ret;
+                    } catch(\Swango\Db\Exception\QueryErrorException $e) {
+                        // 2002 Connection reset by peer or Transport endpoint is not connected
+                        // 2006 MySQL server has gone away
+                        if ($e->errno !== 2002 && $e->errno !== 2006)
+                            throw $e;
 
-        // 进入下面代码，说明是初次绑定，则需要处理连接断开的情况
-
-        if ($sql instanceof \Sql\Update || $sql instanceof \Sql\Insert || $sql instanceof \Sql\InsertMulti ||
-             $sql instanceof \Sql\Delete || (is_string($sql) && strtoupper(substr(ltrim($sql), 0, 6)) !== 'SELECT')) {
-            // 最多尝试两次
-            for($i = 0; $i < 2; ++ $i) {
-                try {
-                    return $this->injectDb()->query($sql, ...$params);
-                } catch(\Swango\Db\Exception\QueryErrorException $e) {
-                    // 2002 Connection reset by peer or Transport endpoint is not connected
-                    // 2006 MySQL server has gone away
-                    if ($e->errno !== 2002 && $e->errno !== 2006)
-                        throw $e;
-
-                    // 抛弃出现问题的连接
-                    $this->db->in_adapter = false;
-                    $this->db = null;
+                        // 抛弃出现问题的连接
+                        $this->db->in_adapter = false;
+                        $this->db = null;
+                    }
                 }
+                throw $e;
             }
-            throw $e;
+        } else {
+            // 进入下面代码，说明是初次绑定，则需要处理连接断开的情况
+            if ($sql instanceof \Sql\Update || $sql instanceof \Sql\Insert || $sql instanceof \Sql\InsertMulti ||
+                 $sql instanceof \Sql\Delete || (is_string($sql) && strtoupper(substr(ltrim($sql), 0, 6)) !== 'SELECT')) {
+                // 最多尝试两次
+                for($i = 0; $i < 2; ++ $i) {
+                    try {
+                        $ret = $this->injectDb()->query($sql, ...$params);
+                        $this->db_used = true;
+                        return $ret;
+                    } catch(\Swango\Db\Exception\QueryErrorException $e) {
+                        // 2002 Connection reset by peer or Transport endpoint is not connected
+                        // 2006 MySQL server has gone away
+                        if ($e->errno !== 2002 && $e->errno !== 2006)
+                            throw $e;
+
+                        // 抛弃出现问题的连接
+                        $this->db->in_adapter = false;
+                        $this->db = null;
+                    }
+                }
+                throw $e;
+            }
+            return parent::query($sql, ...$params);
         }
-        return parent::query($sql, ...$params);
     }
     /**
      * 返回迭代器
@@ -64,9 +87,32 @@ class master extends \Swango\Db\Adapter {
      * @return \Coroutine\Db\Statement 可以直接对其执行 foreach
      */
     public function selectWith($sql, ...$params): \Swango\Db\Statement {
-        if (isset($this->db))
-            return $this->db->selectWith($sql, ...$params);
-        return parent::selectWith($sql, ...$params);
+        if (isset($this->db)) {
+            if ($this->db_used) {
+                return $this->db->selectWith($sql, ...$params);
+            } else {
+                // 最多尝试两次
+                for($i = 0; $i < 2; ++ $i) {
+                    try {
+                        $ret = $this->db->selectWith($sql, ...$params);
+                        $this->db_used = true;
+                        return $ret;
+                    } catch(\Swango\Db\Exception\QueryErrorException $e) {
+                        // 2002 Connection reset by peer or Transport endpoint is not connected
+                        // 2006 MySQL server has gone away
+                        if ($e->errno !== 2002 && $e->errno !== 2006)
+                            throw $e;
+
+                        // 抛弃出现问题的连接
+                        $this->db->in_adapter = false;
+                        $this->db = null;
+                    }
+                }
+                throw $e;
+            }
+        } else {
+            return parent::selectWith($sql, ...$params);
+        }
     }
     public function getTransactionSerial(): ?int {
         return $this->db->getTransactionSerial();
