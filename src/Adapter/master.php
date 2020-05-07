@@ -16,7 +16,7 @@ class master extends \Swango\Db\Adapter {
     public function __destruct() {
         if (isset($this->db)) {
             $db = $this->db;
-            $this->db = null;
+            unset($this->db);
             $db->in_adapter = false;
             $this->pool->push($db);
         }
@@ -46,7 +46,7 @@ class master extends \Swango\Db\Adapter {
 
                         // 抛弃出现问题的连接
                         $this->db->in_adapter = false;
-                        $this->db = null;
+                        unset($this->db);
                     }
                 }
                 throw $e;
@@ -69,7 +69,7 @@ class master extends \Swango\Db\Adapter {
 
                         // 抛弃出现问题的连接
                         $this->db->in_adapter = false;
-                        $this->db = null;
+                        unset($this->db);
                     }
                 }
                 throw $e;
@@ -105,7 +105,7 @@ class master extends \Swango\Db\Adapter {
 
                         // 抛弃出现问题的连接
                         $this->db->in_adapter = false;
-                        $this->db = null;
+                        unset($this->db);
                     }
                 }
                 throw $e;
@@ -123,10 +123,42 @@ class master extends \Swango\Db\Adapter {
         return $this->db->inTransaction();
     }
     public function beginTransaction(): bool {
-        return $this->db->beginTransaction();
+        for($i = 0; $i < 2; ++ $i) {
+            try {
+                $ret = $this->db->beginTransaction();
+                $this->db_used = true;
+                return $ret;
+            } catch(\Swango\Db\Exception\QueryErrorException $e) {
+                // 2002 Connection reset by peer or Transport endpoint is not connected
+                // 2006 MySQL server has gone away
+                if ($e->errno !== 2002 && $e->errno !== 2006)
+                    throw $e;
+
+                // 抛弃出现问题的连接
+                $this->db->in_adapter = false;
+                unset($this->db);
+            }
+        }
+        throw $e;
     }
     public function submit(): bool {
-        return $this->db->submit();
+        for($i = 0; $i < 2; ++ $i) {
+            try {
+                $ret = $this->db->submit();
+                $this->db_used = true;
+                return $ret;
+            } catch(\Swango\Db\Exception\QueryErrorException $e) {
+                // 2002 Connection reset by peer or Transport endpoint is not connected
+                // 2006 MySQL server has gone away
+                if ($e->errno !== 2002 && $e->errno !== 2006)
+                    throw $e;
+
+                // 抛弃出现问题的连接
+                $this->db->in_adapter = false;
+                unset($this->db);
+            }
+        }
+        throw $e;
     }
     public function rollback(): bool {
         if (! isset($this->db))
