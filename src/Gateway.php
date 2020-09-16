@@ -130,7 +130,7 @@ abstract class Gateway {
                     try {
                         $func(...$parameter);
                     } catch(\Throwable $e) {
-                        \FileLog::logThrowable($e, LOGDIR . 'error/', 'SubmitFunction');
+                        \FileLog::logThrowable($e, Swango\Environment::getDir()->log . 'error/', 'SubmitFunction');
                     }
     }
     public static function beginTransaction(): bool {
