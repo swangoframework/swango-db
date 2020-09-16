@@ -35,10 +35,11 @@ abstract class Gateway {
         }
     }
     public static function getDbPool(int $type = self::SLAVE_DB): ?\Swango\Db\Pool {
-        if ($type === self::SLAVE_DB)
+        if ($type === self::SLAVE_DB) {
             return self::$slave_pool;
-        else
+        } else {
             return self::$master_pool;
+        }
     }
     /**
      * 底层方法，不要调用！
@@ -46,10 +47,11 @@ abstract class Gateway {
      * @param \Coroutine\Db $db
      */
     public static function pushDb(\Swango\Db\Db $db): void {
-        if ($db instanceof \Swango\Db\Db\master)
+        if ($db instanceof \Swango\Db\Db\master) {
             self::$master_pool->push($db);
-        else
+        } else {
             self::$slave_pool->push($db);
+        }
     }
     public static function getTransactionSerial(): ?int {
         return self::getAdapter(self::MASTER_DB)->getTransactionSerial();
@@ -65,9 +67,9 @@ abstract class Gateway {
      * @return mixed $func返回值
      */
     public static function runInTransaction(callable $callback, ...$parameter) {
-        if (self::inTransaction())
+        if (self::inTransaction()) {
             return $callback(...$parameter);
-        else {
+        } else {
             self::getAdapter(self::MASTER_DB)->beginTransaction();
             $ret = $callback(...$parameter);
             self::getAdapter(self::MASTER_DB)->submit();
@@ -83,12 +85,11 @@ abstract class Gateway {
      */
     public static function registerSubmitFunction(callable $func, ...$parameter): bool {
         if (self::inTransaction()) {
-            \SysContext::push('SBTAC-func',
-                [
-                    false,
-                    $func,
-                    $parameter
-                ]);
+            \SysContext::push('SBTAC-func', [
+                false,
+                $func,
+                $parameter
+            ]);
             return true;
         } else {
             $func(...$parameter);
@@ -104,34 +105,43 @@ abstract class Gateway {
      */
     public static function registerCoroutineSubmitFunction(callable $func, ...$parameter): bool {
         if (self::inTransaction()) {
-            \SysContext::push('SBTAC-func',
-                [
-                    true,
-                    $func,
-                    $parameter
-                ]);
+            \SysContext::push('SBTAC-func', [
+                true,
+                $func,
+                $parameter
+            ]);
             return true;
         } else {
-            \Swlib\Archer::task($func, $parameter);
+            go(function () use ($func, $parameter) {
+                try {
+                    $func(...$parameter);
+                } catch (\Throwable $e) {
+                    \FileLog::logThrowable($e, Swango\Environment::getDir()->log . 'error/', 'SubmitFunction');
+                }
+            });
             return false;
         }
     }
     protected static function runSubmitFunction() {
         $funcs = \SysContext::getAndDelete('SBTAC-func');
-        if (isset($funcs))
-            foreach ($funcs as [
-                $new_coroutine,
-                $func,
-                $parameter
-            ])
-                if ($new_coroutine)
-                    \Swlib\Archer::task($func, $parameter);
-                else
+        if (isset($funcs)) {
+            foreach ($funcs as [$new_coroutine, $func, $parameter])
+                if ($new_coroutine) {
+                    go(function () use ($func, $parameter) {
+                        try {
+                            $func(...$parameter);
+                        } catch (\Throwable $e) {
+                            \FileLog::logThrowable($e, Swango\Environment::getDir()->log . 'error/', 'SubmitFunction');
+                        }
+                    });
+                } else {
                     try {
                         $func(...$parameter);
-                    } catch(\Throwable $e) {
+                    } catch (\Throwable $e) {
                         \FileLog::logThrowable($e, Swango\Environment::getDir()->log . 'error/', 'SubmitFunction');
                     }
+                }
+        }
     }
     public static function beginTransaction(): bool {
         return self::getAdapter(self::MASTER_DB)->beginTransaction();
@@ -143,8 +153,9 @@ abstract class Gateway {
     }
     public static function rollbackTransaction(): bool {
         $adapter = \SysContext::get('master_adapter');
-        if (isset($adapter))
+        if (isset($adapter)) {
             $ret = $adapter->rollback();
+        }
         \SysContext::del('SBTAC-func');
         return $ret ?? false;
     }

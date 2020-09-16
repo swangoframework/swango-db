@@ -10,8 +10,7 @@
 		"php": ">=7.1",
 		"swango/environment": "^1.0",
 		"swango/sql": "^1.1",
-		"swango/stdlib": "^1.2",
-		"swlib/archer": "^1.1"
+		"swango/stdlib": "^1.2"
 	},
 	"autoload" : {
 		"psr-4" : {
