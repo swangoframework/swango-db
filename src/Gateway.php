@@ -73,6 +73,7 @@ abstract class Gateway {
             self::getAdapter(self::MASTER_DB)->beginTransaction();
             $ret = $callback(...$parameter);
             self::getAdapter(self::MASTER_DB)->submit();
+            self::runSubmitFunction();
             return $ret;
         }
     }
