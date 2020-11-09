@@ -21,7 +21,9 @@ abstract class Db {
     public const DEFAULT_QUERY_TIMEOUT = 25;
     public $in_pool = true;
     protected $swoole_db;
-    protected $transaction_serial, $in_transaction = false, $defer = false, $need_to_run_recv = false, $timeout = self::DEFAULT_QUERY_TIMEOUT;
+    protected bool $in_transaction = false, $defer = false, $need_to_run_recv = false;
+    protected int $timeout = self::DEFAULT_QUERY_TIMEOUT;
+    protected ?int $transaction_serial;
     public function __construct() {
         $this->swoole_db = new \Swoole\Coroutine\MySQL();
     }
@@ -35,13 +37,15 @@ abstract class Db {
         return $this->defer;
     }
     public function setNeedToRunRecv($need_to_run_recv): void {
-        if (! $this->defer)
+        if (! $this->defer) {
             return;
+        }
         $this->need_to_run_recv = $need_to_run_recv;
     }
     public function needToRunRecv(): bool {
-        if (! $this->defer)
+        if (! $this->defer) {
             return false;
+        }
         return $this->need_to_run_recv;
     }
     public function recv() {
@@ -51,8 +55,9 @@ abstract class Db {
     public function connect(array $serverInfo = null): bool {
         $ret = $this->swoole_db->connect($serverInfo);
         if ($ret === false) {
-            if ($this->connect_errno === 1040)
+            if ($this->connect_errno === 1040) {
                 throw new Exception\TooManyConnectionsException();
+            }
             throw new Exception\ConnectErrorException($this->connect_errno, $this->connect_error, $this->errno,
                 $this->error);
         }
@@ -72,37 +77,43 @@ abstract class Db {
         if ($sql instanceof \Sql\AbstractSql) {
             $params = [];
             $sql = $sql->getSqlString(new \Sql\Adapter\Platform\Mysql($this));
-        } elseif (! is_string($sql))
+        } elseif (! is_string($sql)) {
             throw new \Exception('Wrong type: ' . gettype($sql));
+        }
 
         if (empty($params)) {
             $res = $this->swoole_db->query($sql, $this->timeout);
-            if ($res === false)
+            if ($res === false) {
                 throw new Exception\QueryErrorException($this->errno, $this->error);
+            }
             if ($this->defer) {
                 $this->recv();
                 // $ret = $this->fetchAll();
             }
             $ret = $this->swoole_db->fetchAll();
-            if (! isset($ret))
+            if (! isset($ret)) {
                 return true;
+            }
             return $ret;
         }
 
         $result = $this->swoole_db->prepare($sql, $this->timeout);
-        if ($result === false)
+        if ($result === false) {
             throw new Exception\QueryErrorException($this->errno, $this->error);
+        }
         if ($this->defer) {
             // 开启了defer特性，需要recv获取Statement
             $statement = $this->swoole_db->recv();
             $this->need_to_run_recv = true;
-        } else
+        } else {
             $statement = $result;
+        }
 
         $result = $statement->execute($params, $this->timeout);
 
-        if ($result === false)
+        if ($result === false) {
             throw new Exception\QueryErrorException($this->errno, $this->error);
+        }
 
         if ($this->defer) {
             $statement->recv();
@@ -110,42 +121,48 @@ abstract class Db {
         }
 
         $ret = $statement->fetchAll();
-        if (! isset($ret))
+        if (! isset($ret)) {
             return true;
+        }
         return $ret;
     }
     /**
      * 返回迭代器
      *
      * @param string|\Sql\Select $sql
-     * @param unknown ...$params
-     * @throws \DbErrorException\QueryErrorException
-     * @return \Coroutine\Db\Statement 可以直接对其执行 foreach
+     * @param mixed ...$params
+     * @return \Swango\Db\Statement 可以直接对其执行 foreach
+     * @throws \Swango\Db\Exception\QueryErrorException
      */
     public function selectWith($sql, ...$params): Statement {
         if ($sql instanceof \Sql\Select) {
             $params = [];
             $sql = $sql->getSqlString(new \Sql\Adapter\Platform\Mysql($this));
-        } elseif (! is_string($sql))
+        } elseif (! is_string($sql)) {
             throw new \Exception('Wrong type: ' . gettype($sql));
+        }
 
         $result = $this->swoole_db->prepare($sql, $this->timeout);
-        if ($result === false)
+        if ($result === false) {
             throw new Exception\QueryErrorException($this->errno, $this->error);
+        }
         if ($this->defer) {
             // 开启了defer特性，要传入本对象，因为execute之后，statement需要再recv一下才能正常fetch
             $statement = $this->swoole_db->recv();
-            if (is_bool($statement))
+            if (is_bool($statement)) {
                 throw new Exception\QueryErrorException($this->errno, $this->error);
+            }
 
             $this->need_to_run_recv = true;
             $ret = new Statement($statement, $this);
-        } else
-            // 说明没有开启defer特性
+        } else // 说明没有开启defer特性
+        {
             $ret = new Statement($result, $this);
+        }
 
-        if ($ret->execute($this->timeout, ...$params) === false)
+        if ($ret->execute($this->timeout, ...$params) === false) {
             throw new Exception\QueryErrorException($this->errno, $this->error);
+        }
         return $ret;
     }
     public function getTransactionSerial(): ?int {
@@ -155,17 +172,20 @@ abstract class Db {
         return $this->in_transaction;
     }
     public function beginTransaction(): bool {
-        if ($this->defer)
+        if ($this->defer) {
             throw new \Exception('Cannot begin transaction when in defer mode');
-        if ($this->in_transaction)
+        }
+        if ($this->in_transaction) {
             return false;
+        }
         $this->query('SET AUTOCOMMIT=0');
         $this->query('BEGIN WORK');
         $this->in_transaction = true;
-        if (! isset($this->transaction_serial))
+        if (! isset($this->transaction_serial)) {
             $this->transaction_serial = 1;
-        else
-            ++ $this->transaction_serial;
+        } else {
+            ++$this->transaction_serial;
+        }
         \FinishFunc::register([
             $this,
             'rollback'
@@ -173,16 +193,18 @@ abstract class Db {
         return true;
     }
     public function submit(): bool {
-        if (! $this->in_transaction)
+        if (! $this->in_transaction) {
             return false;
+        }
         $this->query('COMMIT WORK');
         $this->query('SET AUTOCOMMIT=1');
         $this->in_transaction = false;
         return true;
     }
-    public function rollback($timeout = NULL): bool {
-        if (! $this->in_transaction)
+    public function rollback($timeout = null): bool {
+        if (! $this->in_transaction) {
             return false;
+        }
         $this->query('ROLLBACK WORK');
         $this->query('SET AUTOCOMMIT=1');
         $this->in_transaction = false;

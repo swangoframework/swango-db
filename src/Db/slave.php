@@ -2,7 +2,7 @@
 namespace Swango\Db\Db;
 class slave extends \Swango\Db\Db {
     public function __destruct() {
-        \Swango\Db\Pool\slave::subCountor();
+        \Swango\Db\Pool\slave::subCounter();
     }
     public function getTransactionSerial(): ?int {
         return null;

@@ -7,17 +7,11 @@ namespace Swango\Db;
  *
  */
 abstract class Adapter {
-    /**
-     *
-     * @var DbPool $pool
-     */
-    protected $pool;
+    protected Pool $pool;
     /**
      * 因兼容性原因，保留此函数
-     *
-     * @deprecated
-     *
      * @return Adapter
+     * @deprecated
      */
     public function getAdapter(): Adapter {
         return $this;
@@ -30,17 +24,18 @@ abstract class Adapter {
      */
     public function query($sql, ...$params) {
         // 最多尝试两次
-        for($i = 0; $i < 2; ++ $i) {
+        for ($i = 0; $i < 2; ++$i) {
             try {
                 $db = $this->pool->pop();
                 $ret = $db->query($sql, ...$params);
                 $this->pool->push($db);
                 return $ret;
-            } catch(Exception\QueryErrorException $e) {
+            } catch (Exception\QueryErrorException $e) {
                 // 2002 Connection reset by peer or Transport endpoint is not connected
                 // 2006 MySQL server has gone away
-                if ($e->errno !== 2002 && $e->errno !== 2006)
+                if ($e->errno !== 2002 && $e->errno !== 2006) {
                     throw $e;
+                }
                 // 抛弃出现问题的连接
                 unset($db);
             }
@@ -51,24 +46,25 @@ abstract class Adapter {
      * 返回迭代器
      *
      * @param string|\Sql\Select $sql
-     * @param unknown ...$params
-     * @throws \DbErrorException\QueryErrorException
-     * @return \Coroutine\Db\Statement 可以直接对其执行 foreach
+     * @param mixed ...$params
+     * @return \Swango\Db\Statement 可以直接对其执行 foreach
+     * @throws \Swango\Db\Exception\QueryErrorException
      */
     public function selectWith($sql, ...$params): Statement {
         // 最多尝试两次
-        for($i = 0; $i < 2; ++ $i) {
+        for ($i = 0; $i < 2; ++$i) {
             try {
                 $db = $this->pool->pop();
                 return $db->selectWith($sql, ...$params);
                 // DB会在Statement销毁时push回pool
                 // if (! $db->inDeferMode())
                 // $this->pool->push($db);
-            } catch(Exception\QueryErrorException $e) {
+            } catch (Exception\QueryErrorException $e) {
                 // 2002 Connection reset by peer or Transport endpoint is not connected
                 // 2006 MySQL server has gone away
-                if ($e->errno !== 2002 && $e->errno !== 2006)
+                if ($e->errno !== 2002 && $e->errno !== 2006) {
                     throw $e;
+                }
                 // 抛弃出现问题的连接
                 unset($db);
             }
