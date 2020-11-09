@@ -20,10 +20,10 @@ namespace Swango\Db;
 abstract class Db {
     public const DEFAULT_QUERY_TIMEOUT = 25;
     public $in_pool = true;
-    protected $swoole_db;
+    protected \Swoole\Coroutine\MySQL $swoole_db;
     protected bool $in_transaction = false, $defer = false, $need_to_run_recv = false;
     protected int $timeout = self::DEFAULT_QUERY_TIMEOUT;
-    protected ?int $transaction_serial;
+    protected ?int $transaction_serial = null;
     public function __construct() {
         $this->swoole_db = new \Swoole\Coroutine\MySQL();
     }
