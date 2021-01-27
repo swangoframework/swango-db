@@ -78,6 +78,25 @@ abstract class Gateway {
         }
     }
     /**
+     * 注册一个函数在提交事务之前执行，若当前不在事务中就直接执行
+     *
+     * @param callable $func
+     * @param mixed ...$parameter
+     * @return bool 当前是否在事务中
+     */
+    public static function registerBeforeSubmitFunction(callable $func, ...$parameter): bool {
+        if (self::inTransaction()) {
+            SysContext::push('BSBTAC-func', [
+                $func,
+                $parameter
+            ]);
+            return true;
+        } else {
+            $func(...$parameter);
+            return false;
+        }
+    }
+    /**
      * 注册一个函数在提交事务之后执行（若发生了回滚，则会清空所有注册的方法），若当前不在事务中就直接执行
      *
      * @param callable $func
@@ -123,7 +142,18 @@ abstract class Gateway {
             return false;
         }
     }
-    protected static function runSubmitFunction() {
+    protected static function runBeforeSubmitFunction(): void {
+        $funcs = SysContext::getAndDelete('BSBTAC-func');
+        if (isset($funcs)) {
+            foreach ($funcs as [$func, $parameter])
+                try {
+                    $func(...$parameter);
+                } catch (Throwable $e) {
+                    FileLog::logThrowable($e, Swango\Environment::getDir()->log . 'error/', 'BeforeSubmitFunction');
+                }
+        }
+    }
+    protected static function runSubmitFunction(): void {
         $funcs = SysContext::getAndDelete('SBTAC-func');
         if (isset($funcs)) {
             foreach ($funcs as [$new_coroutine, $func, $parameter])
@@ -148,6 +178,7 @@ abstract class Gateway {
         return self::getAdapter(self::MASTER_DB)->beginTransaction();
     }
     public static function submitTransaction(): bool {
+        self::runBeforeSubmitFunction();
         $ret = self::getAdapter(self::MASTER_DB)->submit();
         self::runSubmitFunction();
         return $ret;
