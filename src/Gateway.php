@@ -146,11 +146,7 @@ abstract class Gateway {
         $funcs = SysContext::getAndDelete('BSBTAC-func');
         if (isset($funcs)) {
             foreach ($funcs as [$func, $parameter])
-                try {
-                    $func(...$parameter);
-                } catch (Throwable $e) {
-                    FileLog::logThrowable($e, Swango\Environment::getDir()->log . 'error/', 'BeforeSubmitFunction');
-                }
+                $func(...$parameter);
         }
     }
     protected static function runSubmitFunction(): void {
