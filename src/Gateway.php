@@ -70,9 +70,11 @@ abstract class Gateway {
         if (self::inTransaction()) {
             return $callback(...$parameter);
         } else {
-            self::getAdapter(self::MASTER_DB)->beginTransaction();
+            $adapter = self::getAdapter(self::MASTER_DB);
+            $adapter->beginTransaction();
             $ret = $callback(...$parameter);
-            self::getAdapter(self::MASTER_DB)->submit();
+            self::runBeforeSubmitFunction();
+            $adapter->submit();
             self::runSubmitFunction();
             return $ret;
         }
