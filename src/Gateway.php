@@ -187,6 +187,7 @@ abstract class Gateway {
             $ret = $adapter->rollback();
         }
         SysContext::del('SBTAC-func');
+        SysContext::del('BSBTAC-func');
         return $ret ?? false;
     }
 }
