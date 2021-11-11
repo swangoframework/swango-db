@@ -1,7 +1,7 @@
 <?php
 namespace Swango\Db;
 class Statement implements \Iterator {
-    private $load_all_data, $statement, $db, $finished, $current, $position = - 1;
+    private $load_all_data, $statement, $db, $finished, $current, $position = -1;
     public function __construct(\Swoole\Coroutine\MySQL\Statement $statement, ?Db $db = null) {
         $this->load_all_data = null;
         $this->statement = $statement;
@@ -18,8 +18,7 @@ class Statement implements \Iterator {
                 }
                 $this->statement->fetchAll();
             }
-            if ($this->db instanceof Db\slave || ! $this->db->in_adapter)
-                \Gateway::pushDb($this->db);
+            $this->db->pushSelfIntoPoolOnStatementDestruct();
             $this->db = null;
         }
     }
@@ -31,22 +30,25 @@ class Statement implements \Iterator {
      * @return bool|array 成功时返回 ture，如果设置connect的fetch_mode参数为true时；成功时返回array数据集数组，如不是上述情况时；失败返回false，可检查$db->error和$db->errno判断错误原因
      */
     public function execute(int $timeout, ...$params): bool {
-        if ($this->statement->execute($params, $timeout) === false)
+        if ($this->statement->execute($params, $timeout) === false) {
             return false;
+        }
 
         if (isset($this->db) && $this->db instanceof Db\master && $this->db->in_adapter) {
             // 已经绑定在adapter中的主库连接
             $this->load_all_data = new \SplQueue();
 
             $fetch_all = $this->statement->fetchAll();
-            if (is_array($fetch_all))
+            if (is_array($fetch_all)) {
                 foreach ($fetch_all as $v)
                     $this->load_all_data->enqueue((object)$v);
+            }
 
-            if ($this->load_all_data->isEmpty())
+            if ($this->load_all_data->isEmpty()) {
                 $this->finished = true;
-            else
+            } else {
                 $this->current = $this->load_all_data->dequeue();
+            }
         }
 
         $this->position = 0;
@@ -58,13 +60,16 @@ class Statement implements \Iterator {
      * @return array|NULL
      */
     private function fetch(): ?\stdClass {
-        if ($this->position === - 1)
+        if ($this->position === -1) {
             throw new Exception\RunTimeErrorException('Not executed yet!');
+        }
         $res = $this->statement->fetch();
-        if (! isset($res) || $res === false)
+        if (! isset($res) || $res === false) {
             return null;
-        if (array_key_exists('scalar', $res) && $res['scalar'] === false)
+        }
+        if (array_key_exists('scalar', $res) && $res['scalar'] === false) {
             throw new Exception\QueryErrorException(0, 'Fetch result error. scalar=false');
+        }
         return (object)$res;
     }
     /**
@@ -74,14 +79,16 @@ class Statement implements \Iterator {
      */
     public function toArray(): array {
         $this->finished = true;
-        if ($this->position === - 1)
+        if ($this->position === -1) {
             throw new Exception\RunTimeErrorException('Not executed yet!');
-        if (isset($this->load_all_data))
+        }
+        if (isset($this->load_all_data)) {
             $res = $this->load_all_data;
-        else {
+        } else {
             $res = $this->statement->fetchAll();
-            if (! isset($res))
+            if (! isset($res)) {
                 return [];
+            }
         }
         $ret = [];
         foreach ($res as &$arr)
@@ -89,24 +96,27 @@ class Statement implements \Iterator {
         return $ret;
     }
     public function current() {
-        if (! $this->finished && ! isset($this->current))
+        if (! $this->finished && ! isset($this->current)) {
             $this->rewind();
+        }
         // if (isset($this->current->scalar))
         return $this->current;
     }
     public function next(): void {
         if (! $this->finished) {
-            ++ $this->position;
+            ++$this->position;
             if (isset($this->load_all_data)) {
                 if ($this->load_all_data->isEmpty()) {
                     $this->current = null;
                     $this->finished = true;
-                } else
+                } else {
                     $this->current = $this->load_all_data->dequeue();
+                }
             } else {
                 $this->current = $this->fetch();
-                if (! isset($this->current))
+                if (! isset($this->current)) {
                     $this->finished = true;
+                }
             }
         }
     }
@@ -114,13 +124,15 @@ class Statement implements \Iterator {
         return $this->position;
     }
     public function valid(): bool {
-        if ($this->finished && isset($this->current))
+        if ($this->finished && isset($this->current)) {
             unset($this->current);
+        }
         return ! $this->finished;
     }
     public function rewind() {
-        if ($this->finished || isset($this->load_all_data))
+        if ($this->finished || isset($this->load_all_data)) {
             return;
+        }
         if (isset($this->db)) {
             if ($this->db->needToRunRecv()) {
                 $this->statement->recv();
@@ -129,7 +141,8 @@ class Statement implements \Iterator {
         }
 
         $this->current = $this->fetch();
-        if (! isset($this->current))
+        if (! isset($this->current)) {
             $this->finished = true;
+        }
     }
 }

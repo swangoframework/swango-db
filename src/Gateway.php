@@ -41,18 +41,6 @@ abstract class Gateway {
             return self::$master_pool;
         }
     }
-    /**
-     * 底层方法，不要调用！
-     *
-     * @param Swango\Db\Db $db
-     */
-    public static function pushDb(Swango\Db\Db $db): void {
-        if ($db instanceof Swango\Db\Db\master) {
-            self::$master_pool->push($db);
-        } else {
-            self::$slave_pool->push($db);
-        }
-    }
     public static function getTransactionSerial(): ?int {
         return self::getAdapter(self::MASTER_DB)->getTransactionSerial();
     }
@@ -187,6 +175,7 @@ abstract class Gateway {
             $ret = $adapter->rollback();
         }
         SysContext::del('SBTAC-func');
+        SysContext::del('BSBTAC-func');
         return $ret ?? false;
     }
 }

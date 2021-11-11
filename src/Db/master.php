@@ -5,7 +5,7 @@ class master extends \Swango\Db\Db {
     public function __destruct() {
         \Swango\Db\Pool\master::subCounter();
     }
-    public function setDefer() {
+    public function setDefer(): void {
         if ($this->defer) {
             return;
         }
@@ -14,5 +14,10 @@ class master extends \Swango\Db\Db {
         }
         $this->swoole_db->setDefer();
         $this->defer = true;
+    }
+    public function pushSelfIntoPoolOnStatementDestruct(): void {
+        if (! $this->in_adapter) {
+            $this->pool->push($this);
+        }
     }
 }

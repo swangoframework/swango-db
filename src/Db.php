@@ -19,16 +19,21 @@ namespace Swango\Db;
  */
 abstract class Db {
     public const DEFAULT_QUERY_TIMEOUT = 25;
-    public $in_pool = true;
+    public bool $in_pool = true;
     protected \Swoole\Coroutine\MySQL $swoole_db;
     protected bool $in_transaction = false, $defer = false, $need_to_run_recv = false;
     protected int $timeout = self::DEFAULT_QUERY_TIMEOUT;
     protected ?int $transaction_serial = null;
-    public function __construct() {
+    public function __construct(protected Pool $pool) {
         $this->swoole_db = new \Swoole\Coroutine\MySQL();
     }
     public function __get(string $key) {
         return $this->swoole_db->{$key};
+    }
+    abstract public function setDefer(): void;
+    abstract public function pushSelfIntoPoolOnStatementDestruct(): void;
+    public function getPool(): Pool {
+        return $this->pool;
     }
     public function escape(string $str): string {
         return $this->swoole_db->escape($str);
