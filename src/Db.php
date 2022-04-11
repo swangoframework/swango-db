@@ -85,11 +85,13 @@ abstract class Db {
         } elseif (! is_string($sql)) {
             throw new \Exception('Wrong type: ' . gettype($sql));
         }
-
+        if (defined('SQL_DEBUG')) {
+            echo '==========query===========', PHP_EOL, $sql, PHP_EOL, implode(PHP_EOL, $params), PHP_EOL;
+        }
         if (empty($params)) {
             $res = $this->swoole_db->query($sql, $this->timeout);
             if ($res === false) {
-                throw new Exception\QueryErrorException($this->errno, $this->error);
+                throw new Exception\QueryErrorException($this->errno, $this->error, $sql, $params);
             }
             if ($this->defer) {
                 $this->recv();
@@ -104,7 +106,7 @@ abstract class Db {
 
         $result = $this->swoole_db->prepare($sql, $this->timeout);
         if ($result === false) {
-            throw new Exception\QueryErrorException($this->errno, $this->error);
+            throw new Exception\QueryErrorException($this->errno, $this->error, $sql, $params);
         }
         if ($this->defer) {
             // 开启了defer特性，需要recv获取Statement
@@ -117,7 +119,7 @@ abstract class Db {
         $result = $statement->execute($params, $this->timeout);
 
         if ($result === false) {
-            throw new Exception\QueryErrorException($this->errno, $this->error);
+            throw new Exception\QueryErrorException($this->errno, $this->error, $sql, $params);
         }
 
         if ($this->defer) {
@@ -137,7 +139,6 @@ abstract class Db {
      * @param string|\Sql\Select $sql
      * @param mixed ...$params
      * @return \Swango\Db\Statement 可以直接对其执行 foreach
-     * @throws \Swango\Db\Exception\QueryErrorException
      */
     public function selectWith($sql, ...$params): Statement {
         if ($sql instanceof \Sql\Select) {
@@ -146,16 +147,18 @@ abstract class Db {
         } elseif (! is_string($sql)) {
             throw new \Exception('Wrong type: ' . gettype($sql));
         }
-
+        if (defined('SQL_DEBUG')) {
+            echo '==========selectWith===========', PHP_EOL, $sql, PHP_EOL, implode(PHP_EOL, $params), PHP_EOL;
+        }
         $result = $this->swoole_db->prepare($sql, $this->timeout);
         if ($result === false) {
-            throw new Exception\QueryErrorException($this->errno, $this->error);
+            throw new Exception\QueryErrorException($this->errno, $this->error, $sql, $params);
         }
         if ($this->defer) {
             // 开启了defer特性，要传入本对象，因为execute之后，statement需要再recv一下才能正常fetch
             $statement = $this->swoole_db->recv();
             if (is_bool($statement)) {
-                throw new Exception\QueryErrorException($this->errno, $this->error);
+                throw new Exception\QueryErrorException($this->errno, $this->error, $sql, $params);
             }
 
             $this->need_to_run_recv = true;
@@ -166,7 +169,7 @@ abstract class Db {
         }
 
         if ($ret->execute($this->timeout, ...$params) === false) {
-            throw new Exception\QueryErrorException($this->errno, $this->error);
+            throw new Exception\QueryErrorException($this->errno, $this->error, $sql, $params);
         }
         return $ret;
     }

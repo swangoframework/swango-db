@@ -1,10 +1,10 @@
 <?php
 namespace Swango\Db\Exception;
 class QueryErrorException extends \Swango\Db\Exception {
-    public $errno, $error;
-    public function __construct(?int $errno, ?string $error) {
-        parent::__construct("Db query error:[$errno] $error");
-        $this->errno = $errno;
-        $this->error = $error;
+    public function __construct(public ?int $errno, public ?string $error, public string $sql, public array $params) {
+        parent::__construct("DB Error[$errno]$error " . \Json::encode([
+                $sql,
+                ...$params
+            ]));
     }
 }
