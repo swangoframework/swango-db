@@ -20,9 +20,11 @@ abstract class Adapter {
      * 立即返回所有数据
      *
      * @param string|\Sql\AbstractSql $sql
+     * @param mixed ...$params
      * @return array 若为查询，则以数组形式返回查询结果；其他情况返回true
      */
-    public function query($sql, ...$params) {
+    public function query(string|\Sql\AbstractSql                                             $sql,
+                          \BackedEnum|\Swango\Model\IdIndexedModel|string|int|float|bool|null ...$params) {
         // 最多尝试两次
         for ($i = 0; $i < 2; ++$i) {
             try {
@@ -50,7 +52,8 @@ abstract class Adapter {
      * @return \Swango\Db\Statement 可以直接对其执行 foreach
      * @throws \Swango\Db\Exception\QueryErrorException
      */
-    public function selectWith($sql, ...$params): Statement {
+    public function selectWith(string|\Sql\Select                                                  $sql,
+                               \BackedEnum|\Swango\Model\IdIndexedModel|string|int|float|bool|null ...$params): Statement {
         // 最多尝试两次
         for ($i = 0; $i < 2; ++$i) {
             try {

@@ -63,8 +63,11 @@ abstract class Db {
             if ($this->connect_errno === 1040) {
                 throw new Exception\TooManyConnectionsException();
             }
-            throw new Exception\ConnectErrorException($this->connect_errno, $this->connect_error, $this->errno,
-                $this->error);
+            throw new Exception\ConnectErrorException($this->connect_errno,
+                $this->connect_error,
+                $this->errno,
+                $this->error
+            );
         }
         return true;
     }
@@ -76,14 +79,22 @@ abstract class Db {
      * 立即返回所有数据
      *
      * @param string|\Sql\AbstractSql $sql
+     * @param mixed ...$params
      * @return array 若为查询，则以数组形式返回查询结果；其他情况返回true
      */
-    public function query($sql, ...$params) {
+    public function query(string|\Sql\AbstractSql                                             $sql,
+                          \BackedEnum|\Swango\Model\IdIndexedModel|string|int|float|bool|null ...$params) {
         if ($sql instanceof \Sql\AbstractSql) {
             $params = [];
             $sql = $sql->getSqlString(new \Sql\Adapter\Platform\Mysql($this));
-        } elseif (! is_string($sql)) {
-            throw new \Exception('Wrong type: ' . gettype($sql));
+        } else {
+            foreach ($params as &$param)
+                if ($param instanceof \BackedEnum) {
+                    $param = $param->value;
+                } elseif ($param instanceof \Swango\Model\IdIndexedModel) {
+                    $param = $param->getId();
+                }
+            unset($param);
         }
         if (defined('SQL_DEBUG')) {
             echo '==========query===========', PHP_EOL, $sql, PHP_EOL, implode(PHP_EOL, $params), PHP_EOL;
@@ -140,12 +151,19 @@ abstract class Db {
      * @param mixed ...$params
      * @return \Swango\Db\Statement 可以直接对其执行 foreach
      */
-    public function selectWith($sql, ...$params): Statement {
+    public function selectWith(string|\Sql\Select                                                  $sql,
+                               \BackedEnum|\Swango\Model\IdIndexedModel|string|int|float|bool|null ...$params): Statement {
         if ($sql instanceof \Sql\Select) {
             $params = [];
             $sql = $sql->getSqlString(new \Sql\Adapter\Platform\Mysql($this));
-        } elseif (! is_string($sql)) {
-            throw new \Exception('Wrong type: ' . gettype($sql));
+        } else {
+            foreach ($params as &$param)
+                if ($param instanceof \BackedEnum) {
+                    $param = $param->value;
+                } elseif ($param instanceof \Swango\Model\IdIndexedModel) {
+                    $param = $param->getId();
+                }
+            unset($param);
         }
         if (defined('SQL_DEBUG')) {
             echo '==========selectWith===========', PHP_EOL, $sql, PHP_EOL, implode(PHP_EOL, $params), PHP_EOL;
