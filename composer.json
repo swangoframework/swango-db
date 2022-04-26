@@ -9,8 +9,8 @@
 	"require" : {
 		"php": ">=8.0",
 		"swango/environment": "^1.0",
-		"swango/sql": "^1.1",
-		"swango/stdlib": "^1.2"
+		"swango/sql": "^1.0",
+		"swango/stdlib": "^1.0"
 	},
 	"autoload" : {
 		"psr-4" : {
