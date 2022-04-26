@@ -88,13 +88,13 @@ abstract class Db {
             $params = [];
             $sql = $sql->getSqlString(new \Sql\Adapter\Platform\Mysql($this));
         } else {
-            foreach ($params as &$param)
+            // 该处循环不能使用引用语法，否则null值swoole会报错，原因未知
+            foreach ($params as $k => $param)
                 if ($param instanceof \BackedEnum) {
-                    $param = $param->value;
+                    $params[$k] = $param->value;
                 } elseif ($param instanceof \Swango\Model\IdIndexedModel) {
-                    $param = $param->getId();
+                    $params[$k] = $param->getId();
                 }
-            unset($param);
         }
         if (defined('SQL_DEBUG')) {
             echo '==========query===========', PHP_EOL, $sql, PHP_EOL, implode(PHP_EOL, $params), PHP_EOL;
@@ -157,13 +157,13 @@ abstract class Db {
             $params = [];
             $sql = $sql->getSqlString(new \Sql\Adapter\Platform\Mysql($this));
         } else {
-            foreach ($params as &$param)
+            // 该处循环不能使用引用语法，否则null值swoole会报错，原因未知
+            foreach ($params as $k => $param)
                 if ($param instanceof \BackedEnum) {
-                    $param = $param->value;
+                    $params[$k] = $param->value;
                 } elseif ($param instanceof \Swango\Model\IdIndexedModel) {
-                    $param = $param->getId();
+                    $params[$k] = $param->getId();
                 }
-            unset($param);
         }
         if (defined('SQL_DEBUG')) {
             echo '==========selectWith===========', PHP_EOL, $sql, PHP_EOL, implode(PHP_EOL, $params), PHP_EOL;
