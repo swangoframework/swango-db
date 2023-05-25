@@ -4,7 +4,6 @@ namespace Swango\Db;
  * 每个进程只存在一对
  *
  * @author fdrea
- * @property \Swoole\Atomic $atomic
  * @property \Swoole\Atomic $too_many_connection_lock
  * @property int $max_connection 整个Server最大连接数
  * @property int $max_connection_for_each_worker 每个Worker的最大连接数
@@ -12,33 +11,33 @@ namespace Swango\Db;
  */
 abstract class Pool {
     public static function init(): void {
-        static::$atomic = new \Swoole\Atomic();
         static::$too_many_connection_lock = new \Swoole\Atomic();
         static::$max_connection = \Swango\Environment::getServiceConfig()->db_max_conntection;
     }
     public static function subCounter(): int {
-        --static::$count;
-        if (isset(static::$atomic)) {
-            return static::$atomic->sub(1);
-        }
-        return 0;
+        return --static::$count;
     }
     public static function getWorkerCount(): int {
         return static::$count;
     }
+    /**
+     * @param bool $set_to_zero_first
+     * @return void
+     * @deprecated
+     */
     public static function addWorkerCountToAtomic(bool $set_to_zero_first = false): void {
-        if ($set_to_zero_first) {
-            static::$atomic->set(static::$count);
-        } else {
-            static::$atomic->add(static::$count);
-        }
     }
     private const TIMEOUT = 25;
     protected array $server_info;
     protected int $timer;
     protected \SplQueue $queue;
     protected \Swoole\Coroutine\Channel $channel;
-    public function __construct(string $host, string $user, string $password, string $database, int $port = 3306, string $charset = 'utf8') {
+    public function __construct(string $host,
+                                string $user,
+                                string $password,
+                                string $database,
+                                int    $port = 3306,
+                                string $charset = 'utf8') {
         $this->server_info = [
             'host' => $host,
             'user' => $user,
@@ -61,8 +60,7 @@ abstract class Pool {
     }
     abstract protected function _newDb(): Db;
     protected function newDb(): ?Db {
-        $use_max_limit = isset(static::$too_many_connection_lock) && isset(static::$atomic) &&
-            isset(static::$max_connection);
+        $use_max_limit = isset(static::$too_many_connection_lock) && isset(static::$max_connection);
         if ($use_max_limit) {
             if (static::$too_many_connection_lock->get() > \Time\now()) {
                 trigger_error("DbPool: new db fail because of lock");
@@ -70,14 +68,6 @@ abstract class Pool {
             }
             if (static::$count >= static::$max_connection) {
                 trigger_error('DbPool: new db fail because reach max connections for each worker:' . static::$count);
-                return null;
-            }
-
-            // 新增连接时，若已达上限，则返回空
-            $count = static::$atomic->add(1);
-            if ($count > static::$max_connection) {
-                static::$atomic->sub(1);
-                trigger_error("DbPool: new db fail because reach max connections: $count");
                 return null;
             }
         }
